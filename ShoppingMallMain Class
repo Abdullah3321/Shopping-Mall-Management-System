@@ -1,0 +1,202 @@
+package com.mycompany.shoppingmallmanagementsystem;
+
+import java.util.Scanner;
+
+public class ShoppingMallMain
+{
+    ShoppingMallMain() {
+        ProductManager productManager = new ProductManager();
+        Scanner scanner = new Scanner(System.in);
+        Validation validation = new Validation();
+
+        while (true) {
+            System.out.println("\n\n\t1. Display Products");
+            System.out.println("\t2. Add Product");
+            System.out.println("\t3. Search Product");
+            System.out.println("\t4. Delete Product");
+            System.out.println("\t5. Edit Product");
+            System.out.println("\t6. Save Products");
+            System.out.println("\t7. Load Products");
+            System.out.println("\t0. Exit");
+            System.out.print("\tChoose an option: ");
+            int choice = scanner.nextInt();
+            scanner.nextLine(); // consume the newline character
+
+            switch (choice) {
+                case 1:
+                    productManager.displayProducts();
+                    break;
+
+                case 2:
+                    addProduct(productManager, scanner, validation);
+                    break;
+
+                case 3:
+                    searchProduct(productManager, scanner);
+                    break;
+
+                case 4:
+                    deleteProduct(productManager, scanner, validation);
+                    break;
+
+                case 5:
+                    editProduct(productManager, scanner, validation);
+                    break;
+
+                case 6:
+                    productManager.saveProductsToFile(); // Save products to file
+                    break;
+
+                case 7:
+                    productManager.loadProductsFromFile(); // Load products from file
+                    break;
+
+                case 0:
+                    System.out.println("Exiting...");
+                    scanner.close();
+                    return;
+
+                default:
+                    System.out.println("Invalid option. Please try again.");
+            }
+        }
+    }
+
+    private static void addProduct(ProductManager productManager, Scanner scanner, Validation validation) {
+        String name, description, type;
+        double price;
+        int id;
+
+        System.out.print("\n\tEnter product name: ");
+        name = scanner.nextLine();
+        while (!validation.isValidString(name)) {
+            System.out.print("\n\tInvalid name! Enter again: ");
+            name = scanner.nextLine();
+        }
+
+        System.out.print("\n\tEnter product description: ");
+        description = scanner.nextLine();
+        while (!validation.isValidString(description)) {
+            System.out.print("\n\tInvalid description! Enter again: ");
+            description = scanner.nextLine();
+        }
+
+        System.out.print("\n\tEnter product price: ");
+        while (true) {
+            String priceStr = scanner.nextLine();
+            if (validation.isValidPrice(priceStr)) {
+                price = Double.parseDouble(priceStr);
+                break;
+            } else {
+                System.out.print("\n\tInvalid price! Enter again: ");
+            }
+        }
+
+        System.out.print("\n\tEnter product ID: ");
+        while (true) {
+            String idStr = scanner.nextLine();
+            if (validation.isValidId(idStr)) {
+                id = Integer.parseInt(idStr);
+                if (isUniqueId(productManager, id)) {
+                    break;
+                } else {
+                    System.out.print("\n\tDuplicate ID! Enter a unique ID: ");
+                }
+            } else {
+                System.out.print("\n\tInvalid ID! Enter again: ");
+            }
+        }
+
+        System.out.print("\n\tEnter product type (gents/ladies): ");
+        type = scanner.nextLine();
+        while (!type.equalsIgnoreCase("gents") && !type.equalsIgnoreCase("ladies")) {
+            System.out.print("\n\tInvalid type! Enter again: ");
+            type = scanner.nextLine();
+        }
+
+        productManager.addProduct(name, description, price, id, type);
+        System.out.println("\n\tProduct added successfully!");
+    }
+
+    private static void searchProduct(ProductManager productManager, Scanner scanner) {
+        System.out.print("\n\tEnter search criteria: ");
+        String criteria = scanner.nextLine();
+        productManager.searchProducts(criteria);
+    }
+
+    private static void deleteProduct(ProductManager productManager, Scanner scanner, Validation validation) {
+        System.out.print("\n\tEnter product ID to delete: ");
+        while (true) {
+            String idStr = scanner.nextLine();
+            if (validation.isValidId(idStr)) {
+                int id = Integer.parseInt(idStr);
+                productManager.deleteProduct(id);
+                break;
+            } else {
+                System.out.print("\n\tInvalid ID! Enter again: ");
+            }
+        }
+    }
+
+    private static void editProduct(ProductManager productManager, Scanner scanner, Validation validation) {
+        System.out.print("\n\tEnter product ID to edit: ");
+        int id = 0;
+
+        while (true) {
+            String idStr = scanner.nextLine();
+            if (validation.isValidId(idStr)) {
+                id = Integer.parseInt(idStr);
+                // Check if product exists
+                if (isUniqueId(productManager, id)) {
+                    System.out.println("\n\tNo product found with this ID.");
+                    return;
+                }
+                break;
+            } else {
+                System.out.print("\n\tInvalid ID! Enter again: ");
+            }
+        }
+
+        System.out.print("\n\tEnter new product name: ");
+        String newName = scanner.nextLine();
+        while (!validation.isValidString(newName)) {
+            System.out.print("\n\tInvalid name! Enter again: ");
+            newName = scanner.nextLine();
+        }
+
+        System.out.print("\n\tEnter new product description: ");
+        String newDescription = scanner.nextLine();
+        while (!validation.isValidString(newDescription)) {
+            System.out.print("\n\tInvalid description! Enter again: ");
+            newDescription = scanner.nextLine();
+        }
+
+        System.out.print("\n\tEnter new product price: ");
+        double newPrice = 0;
+        while (true) {
+            String newPriceStr = scanner.nextLine();
+            if (validation.isValidPrice(newPriceStr)) {
+                newPrice = Double.parseDouble(newPriceStr);
+                break;
+            } else {
+                System.out.print("\n\tInvalid price! Enter again: ");
+            }
+        }
+
+        productManager.editProduct(id, newName, newDescription, newPrice);
+    }
+
+    private static boolean isUniqueId(ProductManager productManager, int id) {
+        for (int i = 0; i < productManager.gentsCount; i++) {
+            if (productManager.gentsProducts[i].getId() == id) {
+                return false;
+            }
+        }
+        for (int i = 0; i < productManager.ladiesCount; i++) {
+            if (productManager.ladiesProducts[i].getId() == id) {
+                return false;
+            }
+        }
+        return true;
+    }
+}
